@@ -5,3 +5,4 @@ node_modules/
 *.log
 node_portable/
 Thumbs.db
+db.json

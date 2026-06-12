@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(255) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
   role VARCHAR(20) NOT NULL DEFAULT 'user',
+  name VARCHAR(255) DEFAULT NULL,
+  gender VARCHAR(20) DEFAULT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -38,6 +40,7 @@ CREATE TABLE IF NOT EXISTS assessments (
   project_name VARCHAR(255) NOT NULL,
   answers JSON,
   scores JSON,
+  overall_score INT DEFAULT 0,
   remarks LONGTEXT,
   remarks_provider VARCHAR(50),
   feedback JSON,
