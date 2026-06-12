@@ -1,8 +1,7 @@
 /**
  * src/lib/db.js
  * MySQL database layer using mysql2 with connection pooling.
- * Supports both local development (individual DB_* env vars)
- * and Railway production (MYSQL_PUBLIC_URL connection string).
+ * All methods are async and return Promises.
  */
 
 import mysql from 'mysql2/promise';
@@ -12,23 +11,17 @@ import mysql from 'mysql2/promise';
 // ──────────────────────────────────────────────
 function getPool() {
   if (!global.mysqlPool) {
-    if (process.env.MYSQL_PUBLIC_URL) {
-      // ✅ Railway / Production: use the full connection URL
-      global.mysqlPool = mysql.createPool(process.env.MYSQL_PUBLIC_URL + '?charset=utf8mb4');
-    } else {
-      // ✅ Local development: use individual env vars
-      global.mysqlPool = mysql.createPool({
-        host:     process.env.DB_HOST     || 'localhost',
-        port:     parseInt(process.env.DB_PORT || '3306'),
-        user:     process.env.DB_USER     || 'root',
-        password: process.env.DB_PASSWORD || 'root123',
-        database: process.env.DB_NAME     || 'sdlc_maturity',
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0,
-        charset: 'utf8mb4'
-      });
-    }
+    global.mysqlPool = mysql.createPool({
+      host:     process.env.DB_HOST     || 'localhost',
+      port:     parseInt(process.env.DB_PORT || '3306'),
+      user:     process.env.DB_USER     || 'root',
+      password: process.env.DB_PASSWORD || 'root123',
+      database: process.env.DB_NAME     || 'sdlc_maturity',
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+      charset: 'utf8mb4'
+    });
   }
   return global.mysqlPool;
 }
@@ -93,7 +86,7 @@ export async function createUser(email, password) {
 
   const salt = await bcrypt.default.genSalt(10);
   const hashedPassword = await bcrypt.default.hash(password, salt);
-  const id = 'user_' + Math.random().toString(36).substring(2, 10);
+  const id = 'user_' + Math.random().toString(36).substr(2, 9);
 
   await query(
     'INSERT INTO users (id, email, password, role) VALUES (?, ?, ?, ?)',
@@ -162,7 +155,7 @@ export async function getAssessmentById(id) {
 }
 
 export async function saveAssessment(assessmentData) {
-  const id = assessmentData.id || 'asm_' + Math.random().toString(36).substring(2, 10);
+  const id = assessmentData.id || 'asm_' + Math.random().toString(36).substr(2, 9);
   const existing = await query('SELECT id FROM assessments WHERE id = ?', [id]);
 
   const answers      = JSON.stringify(assessmentData.answers  || {});
@@ -239,15 +232,21 @@ export async function getFeedback() {
 }
 
 export async function saveFeedback(feedbackData) {
-  const id = 'fb_' + Math.random().toString(36).substring(2, 10);
+  const id = 'fb_' + Math.random().toString(36).substr(2, 9);
   await query(
     'INSERT INTO feedback (id, assessment_id, user_id, user_email, rating, comments) VALUES (?, ?, ?, ?, ?, ?)',
     [id, feedbackData.assessmentId, feedbackData.userId, feedbackData.userEmail || '',
      feedbackData.rating, feedbackData.comments || '']
   );
-  return { id, assessmentId: feedbackData.assessmentId, userId: feedbackData.userId,
-           userEmail: feedbackData.userEmail, rating: feedbackData.rating,
-           comments: feedbackData.comments, createdAt: new Date().toISOString() };
+  return {
+    id,
+    assessmentId:  feedbackData.assessmentId,
+    userId:        feedbackData.userId,
+    userEmail:     feedbackData.userEmail,
+    rating:        feedbackData.rating,
+    comments:      feedbackData.comments,
+    createdAt:     new Date().toISOString()
+  };
 }
 
 // ──────────────────────────────────────────────
@@ -299,7 +298,7 @@ export async function getSettings() {
     return {
       activeAIProvider: process.env.OLLAMA_MODEL ? 'ollama' : 'expert',
       apiKeys: { openai: '', gemini: '', claude: '' },
-      ollamaUrl:  process.env.OLLAMA_URL   || 'http://localhost:11434',
+      ollamaUrl:   process.env.OLLAMA_URL   || 'http://localhost:11434',
       ollamaModel: process.env.OLLAMA_MODEL || 'llama3'
     };
   }
