@@ -369,10 +369,18 @@
  * src/lib/db.js
  * MySQL database layer using mysql2 with connection pooling.
  */
+import mysql from 'mysql2/promise';
+
+// ─────────────────────────────
+// Connection Pool
+// ─────────────────────────────
+let pool = null;
+
 function getPool() {
   if (!global.mysqlPool) {
+
     if (!process.env.MYSQL_PUBLIC_URL) {
-      throw new Error("MYSQL_PUBLIC_URL missing");
+      throw new Error("MYSQL_PUBLIC_URL missing in environment variables");
     }
 
     global.mysqlPool = mysql.createPool(process.env.MYSQL_PUBLIC_URL);
@@ -381,6 +389,19 @@ function getPool() {
   return global.mysqlPool;
 }
 
+// ─────────────────────────────
+// Query helper
+// ─────────────────────────────
+export async function query(sql, params = []) {
+  const db = getPool();
+  const [rows] = await db.execute(sql, params);
+  return rows;
+}
+
+// ─────────────────────────────
+// DEBUG (temporary only)
+// ─────────────────────────────
+console.log("MYSQL_PUBLIC_URL =", process.env.MYSQL_PUBLIC_URL);
 
   return getAssessmentById(id);
 
