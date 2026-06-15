@@ -89,7 +89,7 @@ VALUES (
 INSERT IGNORE INTO settings (id, active_ai_provider, api_keys, ollama_url, ollama_model)
 VALUES (
   1,
-  'ollama',
+  'expert',
   '{"openai":"","gemini":"","claude":""}',
   'http://localhost:11434',
   'llama3'
